@@ -83,7 +83,7 @@ class AsyncHttpMetricsSpec extends WordSpec
 
     "track the response time with status code 5xx" in {
       for(_ <- 1 to 100) yield get("/async/tracing/error")
-      ResponseTimeMetrics().forStatusCode("5xx").distribution().max should be >= 10000000L
+      ResponseTimeMetrics().forStatusCode("5xx").distribution().max should be >= 1000000L // 1 ms expressed in nanos
     }
   }
 }

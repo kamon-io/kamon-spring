@@ -20,7 +20,7 @@ object Spring {
   }
 
   private def addHttpStatusCodeAsMetricTagFromConfig(config: Config): Boolean =
-    Kamon.config.getBoolean("kamon.spring.add-http-status-code-as-metric-tag")
+    config.getBoolean("kamon.spring.add-http-status-code-as-metric-tag")
 
 
   Kamon.onReconfigure(new OnReconfigureHook {

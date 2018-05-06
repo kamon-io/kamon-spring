@@ -18,11 +18,10 @@ package kamon.spring
 
 import com.typesafe.config.ConfigFactory
 import kamon.Kamon
+import kamon.spring.client.HttpClientSupport
 import kamon.spring.webapp.AppSupport
 import kamon.trace.Span
 import kamon.trace.Span.TagValue
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
-import org.apache.http.impl.client.HttpClients
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{BeforeAndAfterAll, Matchers, OptionValues, WordSpec}
 
@@ -34,7 +33,8 @@ class AsyncServerInstrumentationSpec extends WordSpec
   with Eventually
   with OptionValues
   with SpanReporter
-  with AppSupport {
+  with AppSupport
+  with HttpClientSupport {
 
   override protected def beforeAll(): Unit = {
     Kamon.reconfigure(ConfigFactory.load())
@@ -47,33 +47,21 @@ class AsyncServerInstrumentationSpec extends WordSpec
     stopApp()
   }
 
-  private val httpClient = HttpClients.createDefault()
-
-  private def get(path: String, headers: Seq[(String, String)] = Seq()): CloseableHttpResponse = {
-    val request = new HttpGet(s"http://127.0.0.1:$port$path")
-    headers.foreach { case (name, v) => request.addHeader(name, v) }
-    httpClient.execute(request)
-  }
-
   "The Server instrumentation on Spring Boot with Async Servlet" should {
     "propagate the current context and respond to the ok action" in {
 
       get("/async/tracing/ok").getStatusLine.getStatusCode shouldBe 200
 
       eventually(timeout(3 seconds)) {
-
         val span = reporter.nextSpan().value
         val spanTags = stringTag(span) _
 
         span.operationName shouldBe "async.tracing.ok.get"
         spanTags("span.kind") shouldBe "server"
-        spanTags("component") shouldBe "servlet.server"
+        spanTags("component") shouldBe "spring-server"
         spanTags("http.method") shouldBe "GET"
         spanTags("http.url") shouldBe "/async/tracing/ok"
         span.tags("http.status_code") shouldBe TagValue.Number(200)
-
-//        span.from.until(span.to, ChronoUnit.MILLIS) shouldBe >= (servlet.durationOk.toLong)
-
       }
     }
 
@@ -87,12 +75,10 @@ class AsyncServerInstrumentationSpec extends WordSpec
 
         span.operationName shouldBe "not-found"
         spanTags("span.kind") shouldBe "server"
-        spanTags("component") shouldBe "servlet.server"
+        spanTags("component") shouldBe "spring-server"
         spanTags("http.method") shouldBe "GET"
         spanTags("http.url") shouldBe "/async/tracing/not-found"
         span.tags("http.status_code") shouldBe TagValue.Number(404)
-
-//        span.from.until(span.to, ChronoUnit.MILLIS) shouldBe >= (servlet.durationNotFound.toLong)
       }
     }
 
@@ -105,37 +91,72 @@ class AsyncServerInstrumentationSpec extends WordSpec
 
         span.operationName shouldBe "async.tracing.error.get"
         spanTags("span.kind") shouldBe "server"
-        spanTags("component") shouldBe "servlet.server"
+        spanTags("component") shouldBe "spring-server"
         spanTags("http.method") shouldBe "GET"
         spanTags("http.url") shouldBe "/async/tracing/error"
         span.tags("error") shouldBe TagValue.True
         span.tags("http.status_code") shouldBe TagValue.Number(500)
-
-//        span.from.until(span.to, ChronoUnit.MILLIS) shouldBe >= (servlet.durationError.toLong)
       }
     }
 
     "propagate the current context and respond to the error action produced with an internal exception" in {
-      get("/async/tracing/unhandled-error").getStatusLine.getStatusCode shouldBe 500
+      get("/async/tracing/exception").getStatusLine.getStatusCode shouldBe 500
 
       eventually(timeout(3 seconds)) {
         val span = reporter.nextSpan().value
         val spanTags = stringTag(span) _
 
-        span.operationName shouldBe "async.tracing.unhandled-error.get"
+        span.operationName shouldBe "async.tracing.exception.get"
         spanTags("span.kind") shouldBe "server"
-        spanTags("component") shouldBe "servlet.server"
+        spanTags("component") shouldBe "spring-server"
         spanTags("http.method") shouldBe "GET"
-        spanTags("http.url") shouldBe "/async/tracing/unhandled-error"
+        spanTags("http.url") shouldBe "/async/tracing/exception"
         span.tags("error") shouldBe TagValue.True
         span.tags("http.status_code") shouldBe TagValue.Number(500)
+      }
+    }
 
-//        span.from.until(span.to, ChronoUnit.MILLIS) shouldBe >= (servlet.durationError.toLong)
+    "resume the incoming context and respond to the ok endpoint" in {
+      get("/async/tracing/ok", IncomingContext.headersB3).getStatusLine.getStatusCode shouldBe 200
+
+      eventually(timeout(3 seconds)) {
+
+        val span = reporter.nextSpan().value
+        val spanTags = stringTag(span) _
+
+        span.operationName shouldBe "async.tracing.ok.get"
+        spanTags("span.kind") shouldBe "server"
+        spanTags("component") shouldBe "spring-server"
+        spanTags("http.method") shouldBe "GET"
+        spanTags("http.url") shouldBe "/async/tracing/ok"
+        span.tags("http.status_code") shouldBe TagValue.Number(200)
+
+        span.context.parentID.string shouldBe IncomingContext.SpanId
+        span.context.traceID.string shouldBe IncomingContext.TraceId
       }
     }
   }
 
   def stringTag(span: Span.FinishedSpan)(tag: String): String = {
     span.tags(tag).asInstanceOf[TagValue.String].string
+  }
+
+  private object IncomingContext {
+    import kamon.trace.SpanCodec.B3.{Headers => B3Headers}
+
+    val TraceId = "1234"
+    val ParentSpanId = "2222"
+    val SpanId = "4321"
+    val Sampled = "1"
+    val Flags = "some=baggage;more=baggage;other=baggage2"
+
+
+    val headersB3 = Seq(
+      (B3Headers.TraceIdentifier, TraceId),
+      (B3Headers.ParentSpanIdentifier, ParentSpanId),
+      (B3Headers.SpanIdentifier, SpanId),
+      (B3Headers.Sampled, Sampled),
+      (B3Headers.Flags, Flags))
+
   }
 }

@@ -23,7 +23,7 @@ val kamonTestkit            = "io.kamon"                  %% "kamon-testkit"    
 val springBootStarterWeb    = "org.springframework.boot"  %  "spring-boot-starter-web"    % "2.0.0.RELEASE" exclude("org.springframework.boot", "spring-boot-starter-tomcat")
 val springBootStarterTest   = "org.springframework.boot"  %  "spring-boot-starter-test"   % "2.0.0.RELEASE"
 val springStarterJetty      = "org.springframework.boot"  %  "spring-boot-starter-jetty"  % "2.0.0.RELEASE"
-val kamonServlet3           = "io.kamon"                  %% "kamon-servlet-3.x.x"        % "0.1-e3428b1c8ba6f301749f955b5feb7126ac79bb1e"
+val kamonServlet3           = "io.kamon"                  %% "kamon-servlet-3.x.x"        % "0.1-0c8024964581daaf872876044f8ec7c06b55159e"
 val servletApiV3            = "javax.servlet"             %  "javax.servlet-api"      % "3.0.1"
 
 val httpClient              = "org.apache.httpcomponents" %  "httpclient"             % "4.5.5"
@@ -36,11 +36,10 @@ lazy val root = (project in file("."))
   .aggregate(kamonSpring, kamonSpringBench)
 
 val commonSettings = Seq(
-  scalaVersion := "2.12.5",
+  scalaVersion := "2.12.6",
   resolvers += Resolver.mavenLocal,
-  crossScalaVersions := Seq("2.12.5", "2.11.12", "2.10.7"),
+  crossScalaVersions := Seq("2.12.6", "2.11.12", "2.10.7"),
   scalacOptions ++= Seq(
-//    "-Ypartial-unification",
     "-language:higherKinds",
     "-language:postfixOps") ++ (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2,10)) => Seq("-Yno-generic-signatures", "-target:jvm-1.7")

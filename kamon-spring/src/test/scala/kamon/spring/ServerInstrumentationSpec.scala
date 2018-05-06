@@ -16,10 +16,13 @@
 
 package kamon.spring
 
+import java.time.temporal.ChronoUnit
+
 import com.typesafe.config.ConfigFactory
 import kamon.Kamon
 import kamon.spring.client.HttpClientSupport
 import kamon.spring.webapp.AppSupport
+import kamon.spring.webapp.controller.SyncTracingController
 import kamon.trace.Span
 import kamon.trace.Span.TagValue
 import org.scalatest.concurrent.Eventually
@@ -48,7 +51,7 @@ class ServerInstrumentationSpec extends WordSpec
   }
 
   "The Server instrumentation on Sync Spring Boot" should {
-    "propagate the current context and respond to the ok action" in {
+    "propagate the current context and respond to the ok endpoint" in {
 
       get("/sync/tracing/ok").getStatusLine.getStatusCode shouldBe 200
 
@@ -59,7 +62,7 @@ class ServerInstrumentationSpec extends WordSpec
 
         span.operationName shouldBe "sync.tracing.ok.get"
         spanTags("span.kind") shouldBe "server"
-        spanTags("component") shouldBe "servlet.server"
+        spanTags("component") shouldBe "spring-server"
         spanTags("http.method") shouldBe "GET"
         spanTags("http.url") shouldBe "/sync/tracing/ok"
         span.tags("http.status_code") shouldBe TagValue.Number(200)
@@ -68,7 +71,7 @@ class ServerInstrumentationSpec extends WordSpec
       }
     }
 
-    "propagate the current context and respond to the not-found action" in {
+    "propagate the current context and respond to the not-found endpoint" in {
 
       get("/sync/tracing/not-found").getStatusLine.getStatusCode shouldBe 404
 
@@ -78,7 +81,7 @@ class ServerInstrumentationSpec extends WordSpec
 
         span.operationName shouldBe "not-found"
         spanTags("span.kind") shouldBe "server"
-        spanTags("component") shouldBe "servlet.server"
+        spanTags("component") shouldBe "spring-server"
         spanTags("http.method") shouldBe "GET"
         spanTags("http.url") shouldBe "/sync/tracing/not-found"
         span.tags("http.status_code") shouldBe TagValue.Number(404)
@@ -87,7 +90,7 @@ class ServerInstrumentationSpec extends WordSpec
       }
     }
 
-    "propagate the current context and respond to the error action" in {
+    "propagate the current context and respond to the error endpoint" in {
       get("/sync/tracing/error").getStatusLine.getStatusCode shouldBe 500
 
       eventually(timeout(3 seconds)) {
@@ -96,7 +99,7 @@ class ServerInstrumentationSpec extends WordSpec
 
         span.operationName shouldBe "sync.tracing.error.get"
         spanTags("span.kind") shouldBe "server"
-        spanTags("component") shouldBe "servlet.server"
+        spanTags("component") shouldBe "spring-server"
         spanTags("http.method") shouldBe "GET"
         spanTags("http.url") shouldBe "/sync/tracing/error"
         span.tags("error") shouldBe TagValue.True
@@ -106,26 +109,45 @@ class ServerInstrumentationSpec extends WordSpec
       }
     }
 
-    "propagate the current context and respond to the error action produced with an internal exception" in {
-      get("/sync/tracing/unhandled-error").getStatusLine.getStatusCode shouldBe 500
+    "propagate the current context and respond to the exception endpoint produced with abnormal termination" in {
+      get("/sync/tracing/exception").getStatusLine.getStatusCode shouldBe 200
 
       eventually(timeout(3 seconds)) {
         val span = reporter.nextSpan().value
         val spanTags = stringTag(span) _
 
-        span.operationName shouldBe "sync.tracing.unhandled-error.get"
+        span.operationName shouldBe "sync.tracing.exception.get"
         spanTags("span.kind") shouldBe "server"
-        spanTags("component") shouldBe "servlet.server"
+        spanTags("component") shouldBe "spring-server"
         spanTags("http.method") shouldBe "GET"
-        spanTags("http.url") shouldBe "/sync/tracing/unhandled-error"
+        spanTags("http.url") shouldBe "/sync/tracing/exception"
         span.tags("error") shouldBe TagValue.True
         span.tags("http.status_code") shouldBe TagValue.Number(500)
+      }
+    }
+    "propagate the current context and respond to the slowly endpoint" in {
 
-        //        span.from.until(span.to, ChronoUnit.MILLIS) shouldBe >= (servlet.durationError.toLong)
+      get("/sync/tracing/slowly").getStatusLine.getStatusCode shouldBe 200
+
+      eventually(timeout(3 seconds)) {
+
+        val span = reporter.nextSpan().value
+        val spanTags = stringTag(span) _
+
+        span.operationName shouldBe "sync.tracing.slowly.get"
+        spanTags("span.kind") shouldBe "server"
+        spanTags("component") shouldBe "spring-server"
+        spanTags("http.method") shouldBe "GET"
+        spanTags("http.url") shouldBe "/sync/tracing/slowly"
+        span.tags("http.status_code") shouldBe TagValue.Number(200)
+
+        span.context.parentID.string shouldBe ""
+
+        span.from.until(span.to, ChronoUnit.MILLIS) shouldBe >= (SyncTracingController.slowlyServiceDuration.toMillis)
       }
     }
 
-    "resume the incoming context and respond to the ok action" in {
+    "resume the incoming context and respond to the ok endpoint" in {
       get("/sync/tracing/ok", IncomingContext.headersB3).getStatusLine.getStatusCode shouldBe 200
 
       eventually(timeout(3 seconds)) {
@@ -135,7 +157,7 @@ class ServerInstrumentationSpec extends WordSpec
 
         span.operationName shouldBe "sync.tracing.ok.get"
         spanTags("span.kind") shouldBe "server"
-        spanTags("component") shouldBe "servlet.server"
+        spanTags("component") shouldBe "spring-server"
         spanTags("http.method") shouldBe "GET"
         spanTags("http.url") shouldBe "/sync/tracing/ok"
         span.tags("http.status_code") shouldBe TagValue.Number(200)
@@ -150,7 +172,7 @@ class ServerInstrumentationSpec extends WordSpec
     span.tags(tag).asInstanceOf[TagValue.String].string
   }
 
-  object IncomingContext {
+  private object IncomingContext {
     import kamon.trace.SpanCodec.B3.{Headers => B3Headers}
 
     val TraceId = "1234"
