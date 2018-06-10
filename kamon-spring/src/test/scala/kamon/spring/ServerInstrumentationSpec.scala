@@ -22,7 +22,7 @@ import com.typesafe.config.ConfigFactory
 import kamon.Kamon
 import kamon.spring.client.HttpClientSupport
 import kamon.spring.webapp.AppSupport
-import kamon.spring.webapp.controller.BenchsController
+import kamon.spring.webapp.controller.SyncTracingController
 import kamon.trace.Span
 import kamon.trace.Span.TagValue
 import org.scalatest.concurrent.Eventually
@@ -143,7 +143,7 @@ class ServerInstrumentationSpec extends WordSpec
 
         span.context.parentID.string shouldBe ""
 
-        span.from.until(span.to, ChronoUnit.MILLIS) shouldBe >= (BenchsController.slowlyServiceDuration.toMillis)
+        span.from.until(span.to, ChronoUnit.MILLIS) shouldBe >= (SyncTracingController.slowlyServiceDuration.toMillis)
       }
     }
 

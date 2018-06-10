@@ -4,6 +4,7 @@ import com.typesafe.config.Config
 import javax.servlet.http.HttpServletRequest
 import kamon.util.DynamicAccess
 import kamon.{Kamon, OnReconfigureHook}
+import org.springframework.http.HttpRequest
 
 object Spring {
   @volatile var nameGenerator: NameGenerator = nameGeneratorFromConfig(Kamon.config())
@@ -11,7 +12,7 @@ object Spring {
 
   def generateOperationName(request: HttpServletRequest): String = nameGenerator.generateOperationName(request)
 
-  def generateHttpClientOperationName(request: HttpServletRequest): String = nameGenerator.generateHttpClientOperationName(request)
+  def generateHttpClientOperationName(request: HttpRequest): String = nameGenerator.generateHttpClientOperationName(request)
 
   private def nameGeneratorFromConfig(config: Config): NameGenerator = {
     val dynamic = new DynamicAccess(getClass.getClassLoader)
@@ -33,7 +34,7 @@ object Spring {
 
 trait NameGenerator {
   def generateOperationName(request: HttpServletRequest): String
-  def generateHttpClientOperationName(request: HttpServletRequest): String
+  def generateHttpClientOperationName(request: HttpRequest): String
 }
 
 class DefaultNameGenerator extends NameGenerator {
@@ -45,8 +46,8 @@ class DefaultNameGenerator extends NameGenerator {
   private val localCache = TrieMap.empty[String, String]
   private val normalizePattern = """\$([^<]+)<[^>]+>""".r
 
-  override def generateHttpClientOperationName(request: HttpServletRequest): String = {
-    request.getRequestURL.toString
+  override def generateHttpClientOperationName(request: HttpRequest): String = {
+    request.getURI.toASCIIString
   }
 
   // https://stackoverflow.com/a/17241575/3392786

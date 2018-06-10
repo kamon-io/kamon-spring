@@ -3,6 +3,7 @@ package kamon.spring.webapp
 import javax.servlet._
 import javax.servlet.http.HttpServletRequest
 import kamon.servlet.v3.KamonFilterV3
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.web.server.WebServerFactoryCustomizer
 import org.springframework.boot.web.servlet.FilterRegistrationBean
@@ -14,11 +15,11 @@ import org.springframework.stereotype.Component
 class AppRunner {
 
   @Bean
-  def kamonFilterRegistration: FilterRegistrationBean[KamonFilterV3] = {
+  def kamonFilterRegistration(@Value("${webapp.kamon.enabled}") enabled: Boolean): FilterRegistrationBean[KamonFilterV3] = {
     val registrationBean = new FilterRegistrationBean[KamonFilterV3]
     registrationBean.setFilter(new KamonFilterV3)
     registrationBean.addUrlPatterns("/*")
-    registrationBean.setEnabled(true)
+    registrationBean.setEnabled(enabled)
     registrationBean.setName("kamonFilter")
     registrationBean.setAsyncSupported(true)
     registrationBean.setOrder(Int.MinValue)
