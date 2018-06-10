@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.{RequestMapping, RestController}
 @RestController
 @RequestMapping(Array("/sync/tracing"))
 private[spring]
-class SyncTracingController extends ApiUtils {
+class BenchsController extends ApiUtils {
 
   @RequestMapping(Array("/ok"))
   private[spring] def home = "Hello World!"
@@ -31,12 +31,12 @@ class SyncTracingController extends ApiUtils {
 
   @RequestMapping(Array("/slowly"))
   private[spring] def slowly(response: HttpServletResponse) =
-    withDelay(SyncTracingController.slowlyServiceDuration.toMillis) {
+    withDelay(BenchsController.slowlyServiceDuration.toMillis) {
       "Slowly api"
     }
 }
 
-object SyncTracingController {
+object BenchsController {
   import concurrent.duration._
   val slowlyServiceDuration: FiniteDuration = 1 seconds
 }

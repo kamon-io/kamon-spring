@@ -14,15 +14,14 @@
  * =========================================================================================
  */
 
-package kamon.spring
+package kamon.spring.auto
 
 import java.time.temporal.ChronoUnit
 
 import com.typesafe.config.ConfigFactory
 import kamon.Kamon
-import kamon.spring.client.HttpClientSupport
-import kamon.spring.webapp.AppSupport
-import kamon.spring.webapp.controller.BenchsController
+import kamon.spring.auto.webapp.controller.SyncTracingController
+import kamon.spring.auto.client.HttpClientSupport
 import kamon.trace.Span
 import kamon.trace.Span.TagValue
 import org.scalatest.concurrent.Eventually
@@ -36,7 +35,7 @@ class ServerInstrumentationSpec extends WordSpec
   with Eventually
   with OptionValues
   with SpanReporter
-  with AppSupport
+  with webapp.AppSupport
   with HttpClientSupport {
 
   override protected def beforeAll(): Unit = {
@@ -143,7 +142,7 @@ class ServerInstrumentationSpec extends WordSpec
 
         span.context.parentID.string shouldBe ""
 
-        span.from.until(span.to, ChronoUnit.MILLIS) shouldBe >= (BenchsController.slowlyServiceDuration.toMillis)
+        span.from.until(span.to, ChronoUnit.MILLIS) shouldBe >= (SyncTracingController.slowlyServiceDuration.toMillis)
       }
     }
 
