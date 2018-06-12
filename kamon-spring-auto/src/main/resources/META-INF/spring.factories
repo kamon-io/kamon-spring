@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-kamon.spring.auto.KamonSpringAuto
+kamon.spring.auto.KamonSpringAuto,\
+kamon.spring.auto.KamonSpringRestTemplateAuto

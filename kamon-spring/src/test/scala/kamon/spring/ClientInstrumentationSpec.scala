@@ -41,7 +41,7 @@ class ClientInstrumentationSpec extends WordSpec
         |
     """.stripMargin
     )
-    startApp(enableKamon = false)
+    startApp(kamonSpringWebEnabled = false)
     startRegistration()
 
   }
