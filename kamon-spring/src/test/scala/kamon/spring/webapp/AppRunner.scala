@@ -1,57 +1,63 @@
 package kamon.spring.webapp
 
-import javax.servlet._
-import javax.servlet.http.HttpServletRequest
+import java.util
+
+import javax.servlet.DispatcherType
 import kamon.servlet.v3.KamonFilterV3
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.web.server.WebServerFactoryCustomizer
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory
+import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory
+import org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletContainerFactory
 import org.springframework.boot.web.servlet.FilterRegistrationBean
-import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory
-import org.springframework.context.annotation.Bean
-import org.springframework.stereotype.Component
+import org.springframework.context.annotation.{Bean, Configuration}
 
 @SpringBootApplication
-class AppRunner {
+class AppJettyRunner
+
+@SpringBootApplication
+class AppTomcatRunner
+
+@SpringBootApplication
+class AppUndertowRunner
+
+@Configuration
+@ConditionalOnProperty(name = Array("kamon.spring.servlet-container"), havingValue = "jetty", matchIfMissing = true)
+class configJetty {
 
   @Bean
-  def kamonFilterRegistration(@Value("${webapp.kamon.enabled}") enabled: Boolean): FilterRegistrationBean[KamonFilterV3] = {
-    val registrationBean = new FilterRegistrationBean[KamonFilterV3]
+  def jettyEmbeddedServletContainerFactory = new JettyEmbeddedServletContainerFactory
+}
+
+@Configuration
+@ConditionalOnProperty(name = Array("kamon.spring.servlet-container"), havingValue = "tomcat", matchIfMissing = false)
+class configTomcat {
+
+  @Bean
+  def tomcatEmbeddedServletContainerFactory = new TomcatEmbeddedServletContainerFactory
+}
+
+@Configuration
+@ConditionalOnProperty(name = Array("kamon.spring.servlet-container"), havingValue = "undertow", matchIfMissing = false)
+class configUndertow {
+
+  @Bean
+  def undertowEmbeddedServletContainerFactory = new UndertowEmbeddedServletContainerFactory
+}
+
+@Configuration
+class Config {
+
+  @Bean
+  def kamonFilterRegistration(@Value("${kamon.spring.web.enabled}") enabled: Boolean): FilterRegistrationBean = {
+    val registrationBean = new FilterRegistrationBean()
     registrationBean.setFilter(new KamonFilterV3)
     registrationBean.addUrlPatterns("/*")
     registrationBean.setEnabled(enabled)
     registrationBean.setName("kamonFilter")
-    registrationBean.setAsyncSupported(true)
-    registrationBean.setOrder(Int.MinValue)
+    registrationBean.setDispatcherTypes(util.EnumSet.of(DispatcherType.REQUEST))
+    registrationBean.setOrder(Int.MaxValue)
     registrationBean
-  }
-
-//  @Bean
-//  def debugFilterRegistration: FilterRegistrationBean[DebugFilter] = {
-//    val registrationBean = new FilterRegistrationBean[DebugFilter]
-//    registrationBean.setFilter(new DebugFilter)
-//    registrationBean.addUrlPatterns("/*")
-//    registrationBean.setEnabled(true)
-//    registrationBean.setName("debugFilter")
-//    registrationBean.setAsyncSupported(true)
-//    registrationBean
-//  }
-}
-
-@Component
-class CustomizationBean extends WebServerFactoryCustomizer[ConfigurableServletWebServerFactory] {
-  override def customize(server: ConfigurableServletWebServerFactory): Unit = {
-    server.setPort(0) // Random port
-  }
-}
-
-class DebugFilter extends Filter {
-  override def init(filterConfig: FilterConfig): Unit = ()
-  override def destroy(): Unit = ()
-
-  override def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain): Unit = {
-    chain.doFilter(request, response)
-    val req = request.asInstanceOf[HttpServletRequest]
-    println(s"***** isAsyncStarted: ${req.isAsyncStarted}")
   }
 }

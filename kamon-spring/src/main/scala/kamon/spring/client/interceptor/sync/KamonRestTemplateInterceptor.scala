@@ -1,5 +1,6 @@
-package kamon.spring.client.interceptor
+package kamon.spring.client.interceptor.sync
 
+import kamon.spring.client.interceptor.KamonSpringClientTracing
 import kamon.trace.Span
 import org.springframework.http.HttpRequest
 import org.springframework.http.client.{ClientHttpRequestExecution, ClientHttpRequestInterceptor, ClientHttpResponse}

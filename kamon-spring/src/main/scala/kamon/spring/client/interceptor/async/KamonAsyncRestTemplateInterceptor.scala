@@ -1,8 +1,9 @@
-package kamon.spring.client.interceptor
+package kamon.spring.client.interceptor.async
 
+import kamon.spring.client.interceptor.KamonSpringClientTracing
 import org.springframework.http.HttpRequest
 import org.springframework.http.client.{AsyncClientHttpRequestExecution, AsyncClientHttpRequestInterceptor, ClientHttpResponse}
-import org.springframework.util.concurrent.{ListenableFuture, SuccessCallback}
+import org.springframework.util.concurrent.{FailureCallback, ListenableFuture, SuccessCallback}
 
 class KamonAsyncRestTemplateInterceptor extends AsyncClientHttpRequestInterceptor with KamonSpringClientTracing {
 
@@ -11,9 +12,13 @@ class KamonAsyncRestTemplateInterceptor extends AsyncClientHttpRequestIntercepto
     val clientSpan = withNewSpan(request)
     val responseFuture = execution.executeAsync(request, body)
 
-    responseFuture.addCallback(new SuccessCallback[ClientHttpResponse] {
-      override def onSuccess(result: ClientHttpResponse): Unit = successContinuation(clientSpan)(result)
-    }, (ex: Throwable) => failureContinuation(clientSpan)(ex))
+    responseFuture.addCallback(
+      new SuccessCallback[ClientHttpResponse] {
+        override def onSuccess(result: ClientHttpResponse): Unit = successContinuation(clientSpan)(result)
+      },
+      new FailureCallback {
+        override def onFailure(ex: Throwable): Unit = failureContinuation(clientSpan)(ex)
+      })
 
     responseFuture
   }

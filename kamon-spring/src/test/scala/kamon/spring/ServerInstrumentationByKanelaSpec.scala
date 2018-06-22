@@ -18,6 +18,7 @@ package kamon.spring
 
 import com.typesafe.config.ConfigFactory
 import kamon.Kamon
+import kamon.spring.utils.ForkTest
 import kamon.spring.webapp.AppSupport
 import kamon.spring.webapp.controller.{AsyncTracingController, SyncTracingController}
 import kamon.testkit.Reconfigure
@@ -26,19 +27,22 @@ import org.scalatest.concurrent.Eventually
 
 import scala.concurrent.duration.FiniteDuration
 
-class JettyServerInstrumentationSpec extends ServerInstrumentationSpec {
-  override def startApp(): Unit = startJettyApp()
+@ForkTest(attachKanelaAgent = true)
+class JettyServerInstrumentationByKanelaSpec extends ServerInstrumentationSpec {
+  override def startApp(): Unit = startJettyApp(kamonSpringWebEnabled = false)
 }
 
-class TomcatServerInstrumentationSpec extends ServerInstrumentationSpec {
-  override def startApp(): Unit = startTomcatApp()
+@ForkTest(attachKanelaAgent = true)
+class TomcatServerInstrumentationByKanelaSpec extends ServerInstrumentationSpec {
+  override def startApp(): Unit = startTomcatApp(kamonSpringWebEnabled = false)
 }
 
-class UndertowServerInstrumentationSpec extends ServerInstrumentationSpec {
-  override def startApp(): Unit = startUndertowApp()
+@ForkTest(attachKanelaAgent = true)
+class UndertowServerInstrumentationByKanelaSpec extends ServerInstrumentationSpec {
+  override def startApp(): Unit = startUndertowApp(kamonSpringWebEnabled = false)
 }
 
-abstract class ServerInstrumentationSpec extends FlatSpec
+abstract class ServerInstrumentationByKanelaSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterAll
   with Eventually
@@ -67,10 +71,11 @@ abstract class ServerInstrumentationSpec extends FlatSpec
     override def port: Int = self.port
   }
 
-  "A Server with sync controllers instrumented manually" should behave like
+  "A Server with sync controllers instrumented by Kanela" should behave like
     contextPropagation(new Server(prefixEndpoint = "sync", exceptionStatus = 200,
       SyncTracingController.slowlyServiceDuration))
-  "A Server with async controllers instrumented manually" should behave like
+  "A Server with async controllers instrumented by Kanela" should behave like
     contextPropagation(new Server(prefixEndpoint = "async", exceptionStatus = 500,
       AsyncTracingController.slowlyServiceDuration))
+
 }

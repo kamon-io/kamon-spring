@@ -34,10 +34,12 @@ class AsyncTracingController extends ApiUtils {
   }
 
   @RequestMapping(Array("/slowly"))
-  private[spring] def slowly(response: HttpServletResponse) =
-    withDelay(AsyncTracingController.slowlyServiceDuration.toMillis) {
-      "Slowly api"
-    }
+  private[spring] def slowly(response: HttpServletResponse): Callable[ResponseEntity[String]] = new Callable[ResponseEntity[String]] {
+    override def call(): ResponseEntity[String] =
+      withDelay(AsyncTracingController.slowlyServiceDuration.toMillis) {
+        ResponseEntity.ok("Slowly api")
+      }
+  }
 }
 
 object AsyncTracingController {

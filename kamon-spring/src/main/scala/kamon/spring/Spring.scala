@@ -50,8 +50,6 @@ class DefaultNameGenerator extends NameGenerator {
     request.getURI.toASCIIString
   }
 
-  // https://stackoverflow.com/a/17241575/3392786
-  // https://cdivilly.wordpress.com/2011/04/22/java-servlets-uri-parameters/
   override def generateOperationName(request: HttpServletRequest): String = {
 
     localCache.getOrElseUpdate(s"${request.getMethod}${request.getRequestURI}", {

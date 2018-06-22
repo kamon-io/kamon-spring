@@ -1,18 +1,19 @@
-package kamon.spring.auto
+package kamon.spring.client.interceptor
 
 import java.util
 
 import kamon.spring.KamonSpringLogger
-import kamon.spring.client.interceptor.{KamonAsyncRestTemplateInterceptor, KamonRestTemplateInterceptor}
-import org.springframework.http.client.{AsyncClientHttpRequestInterceptor, ClientHttpRequestInterceptor}
+import kamon.spring.client.interceptor.async.KamonAsyncRestTemplateInterceptor
+import kamon.spring.client.interceptor.sync.KamonRestTemplateInterceptor
 import org.springframework.http.client.support.{InterceptingAsyncHttpAccessor, InterceptingHttpAccessor}
+import org.springframework.http.client.{AsyncClientHttpRequestInterceptor, ClientHttpRequestInterceptor}
 
 import scala.collection.mutable
 
-trait KamonRestTemplateInterceptorAware extends KamonSpringLogger {
+trait KamonSyncInterceptorInjector extends KamonSpringLogger {
   import collection.JavaConverters._
 
-  protected def registerKamonInterceptor(accessor: InterceptingHttpAccessor): Unit = {
+  def register(accessor: InterceptingHttpAccessor): Unit = {
     val interceptors: mutable.Seq[ClientHttpRequestInterceptor] = accessor.getInterceptors.asScala
     if (!kamonInterceptorLoaded(interceptors)) {
       logger.info(s"Adding ${classOf[KamonRestTemplateInterceptor].getSimpleName} to $accessor")
@@ -28,10 +29,12 @@ trait KamonRestTemplateInterceptorAware extends KamonSpringLogger {
   }
 }
 
-trait KamonAsyncRestTemplateInterceptorAware extends KamonSpringLogger {
+object KamonSyncInterceptorInjector extends KamonSyncInterceptorInjector
+
+trait KamonAsyncInterceptorInjector extends KamonSpringLogger {
   import collection.JavaConverters._
 
-  protected def registerKamonAsyncInterceptor(accessor: InterceptingAsyncHttpAccessor): Unit = {
+  def register(accessor: InterceptingAsyncHttpAccessor): Unit = {
     val interceptors: mutable.Seq[AsyncClientHttpRequestInterceptor] = accessor.getInterceptors.asScala
     if (!kamonInterceptorLoaded(interceptors)) {
       logger.info(s"Adding ${classOf[KamonRestTemplateInterceptor].getSimpleName} to $accessor")
@@ -46,3 +49,5 @@ trait KamonAsyncRestTemplateInterceptorAware extends KamonSpringLogger {
     interceptors.exists(_.isInstanceOf[KamonAsyncRestTemplateInterceptor])
   }
 }
+
+object KamonAsyncInterceptorInjector extends KamonAsyncInterceptorInjector

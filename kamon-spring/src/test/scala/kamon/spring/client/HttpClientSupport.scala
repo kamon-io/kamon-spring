@@ -7,7 +7,7 @@ trait HttpClientSupport {
 
   def port: Int
 
-  private val httpClient = HttpClients.createDefault()
+  private lazy val httpClient = HttpClients.createDefault()
 
   def get(path: String, headers: Seq[(String, String)] = Seq()): CloseableHttpResponse = {
     val request = new HttpGet(s"http://127.0.0.1:$port$path")
@@ -17,3 +17,5 @@ trait HttpClientSupport {
     response
   }
 }
+
+case class HttpClientTest(override val port: Int) extends HttpClientSupport

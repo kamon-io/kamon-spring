@@ -1,6 +1,7 @@
 package kamon.spring.auto
 
 import javax.annotation.PostConstruct
+import kamon.spring.client.interceptor.{KamonAsyncInterceptorInjector, KamonSyncInterceptorInjector}
 import org.springframework.boot.autoconfigure.condition._
 import org.springframework.boot.web.client.RestTemplateCustomizer
 import org.springframework.context.annotation.{Bean, Configuration}
@@ -14,26 +15,26 @@ class KamonSpringRestTemplateAuto {
 
   @Configuration
   @ConditionalOnBean(Array(classOf[InterceptingHttpAccessor]))
-  class KamonRestTemplateTracingConfig(accessors: java.util.Set[InterceptingHttpAccessor]) extends KamonRestTemplateInterceptorAware {
+  class KamonRestTemplateTracingConfig(accessors: java.util.Set[InterceptingHttpAccessor]) extends KamonSyncInterceptorInjector {
     import collection.JavaConverters._
 
     @PostConstruct
     def init(): Unit = {
       logger.info("Initializing Kamon RestTemplate interceptors")
-      accessors.asScala.foreach(registerKamonInterceptor)
+      accessors.asScala.foreach(register)
     }
   }
 
   @Configuration
   @ConditionalOnBean(Array(classOf[InterceptingAsyncHttpAccessor]))
   @ConditionalOnClass(Array(classOf[InterceptingAsyncHttpAccessor]))
-  class KamonAsyncRestTemplateTracingConfig(accessors: java.util.Set[InterceptingAsyncHttpAccessor]) extends KamonAsyncRestTemplateInterceptorAware {
+  class KamonAsyncRestTemplateTracingConfig(accessors: java.util.Set[InterceptingAsyncHttpAccessor]) extends KamonAsyncInterceptorInjector {
     import collection.JavaConverters._
 
     @PostConstruct
     def init(): Unit = {
       logger.info("Initializing Kamon Async RestTemplate interceptors")
-      accessors.asScala.foreach(registerKamonAsyncInterceptor)
+      accessors.asScala.foreach(register)
     }
   }
 

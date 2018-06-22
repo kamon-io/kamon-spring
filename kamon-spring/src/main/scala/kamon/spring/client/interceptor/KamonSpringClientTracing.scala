@@ -16,7 +16,7 @@ trait KamonSpringClientTracing {
       .asChildOf(parentSpan)
       .withMetricTag("span.kind", "client")
       .withMetricTag("component", "spring-rest-template-client")
-      .withMetricTag("http.method", request.getMethodValue)
+      .withMetricTag("http.method", request.getMethod.name())
       .withTag("http.url", request.getURI.toASCIIString)
 
     val clientRequestSpan = currentContext.get(SpanCustomizer.ContextKey)

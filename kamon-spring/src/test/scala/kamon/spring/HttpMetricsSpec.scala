@@ -44,7 +44,7 @@ class HttpMetricsSpec extends WordSpec
 
   override protected def beforeAll(): Unit = {
     Kamon.reconfigure(ConfigFactory.load())
-    startApp()
+    startJettyApp()
     startRegistration()
   }
 

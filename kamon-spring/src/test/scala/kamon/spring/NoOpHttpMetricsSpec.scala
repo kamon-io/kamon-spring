@@ -44,7 +44,7 @@ class NoOpHttpMetricsSpec extends WordSpec
 
   override protected def beforeAll(): Unit = {
     Kamon.reconfigure(ConfigFactory.parseString("kamon.servlet.metrics.enabled=false").withFallback(ConfigFactory.load()))
-    startApp()
+    startJettyApp()
     startRegistration()
   }
 
