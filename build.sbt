@@ -47,25 +47,23 @@ lazy val root = (project in file("."))
 val commonSettings = Seq(
   scalaVersion := "2.12.6",
   resolvers += Resolver.mavenLocal,
-  crossScalaVersions := Seq("2.12.6", "2.11.12", "2.10.7"),
+  crossScalaVersions := Seq("2.12.6"),
   scalacOptions ++= Seq(
     "-language:higherKinds",
     "-language:postfixOps") ++ (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2,10)) => Seq("-Yno-generic-signatures", "-target:jvm-1.7")
-    case Some((2,11)) => Seq("-Ybackend:GenBCode","-Ydelambdafy:method","-target:jvm-1.8")
     case Some((2,12)) => Seq("-opt:l:method","-target:jvm-1.8")
     case _ => Seq.empty
-  })
-)
+  }))
+
+val commonTestSettings = Seq(parallelExecution in Test := false)
 
 lazy val kamonSpring = Project("kamon-spring", file("kamon-spring"))
   .settings(moduleName := "kamon-spring")
   .enablePlugins(JavaAgent)
-//-javaagent:/home/cspinetta/.m2/repository/io/kamon/kanela-agent/0.0.3019-NO-BUNDLED/kanela-agent-0.0.3019-NO-BUNDLED.jar
   .settings(javaAgents += "io.kamon"    % "kanela-agent"   % "0.0.3019-NO-BUNDLED"  % "compile;test")
   .settings(commonSettings: _*)
+  .settings(commonTestSettings: _*)
   .settings(KanelaAttacherTest.settings: _*)
-  .settings(parallelExecution in Test := false)
   .settings(
     libraryDependencies ++=
       compileScope(kamonCore, kamonServlet3, scalaExtension) ++
@@ -74,15 +72,15 @@ lazy val kamonSpring = Project("kamon-spring", file("kamon-spring"))
         springStarterUndertow, httpClient))
 
 lazy val kamonSpringAuto = Project("kamon-spring-auto", file("kamon-spring-auto"))
-  .dependsOn(kamonSpring)
+  .dependsOn(kamonSpring % "compile->compile;test->test")
   .settings(moduleName := "kamon-spring-auto")
-  .settings(parallelExecution in Test := false)
   .settings(commonSettings: _*)
+  .settings(commonTestSettings: _*)
   .settings(
     libraryDependencies ++=
-      compileScope(kamonCore, kamonServlet3, springBootAutoconfigure) ++
-      providedScope(springBootStarterWebExcludingTomcat, servletApiV3) ++
-      testScope(scalatest, kamonTestkit, logbackClassic, springBootStarterTest, springStarterJetty, httpClient))
+      compileScope(kamonCore, kamonServlet3) ++
+      providedScope(springBootAutoconfigure, springWeb, servletApiV3) ++
+      testScope(scalatest, kamonTestkit, logbackClassic, springBootStarterWeb, httpClient))
 
 lazy val kamonSpringBench = Project("benchmarks", file("kamon-spring-bench"))
   .enablePlugins(JmhPlugin)
@@ -90,7 +88,6 @@ lazy val kamonSpringBench = Project("benchmarks", file("kamon-spring-bench"))
   .settings(
     moduleName := "kamon-spring-bench",
     scalaVersion := "2.12.6",
-    crossScalaVersions := Seq("2.12.6"),
     fork in Test := true)
   .settings(noPublishing: _*)
   .settings(

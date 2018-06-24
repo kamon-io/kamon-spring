@@ -1,5 +1,4 @@
-/*
- * =========================================================================================
+/* =========================================================================================
  * Copyright © 2013-2018 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -14,15 +13,16 @@
  * =========================================================================================
  */
 
-package kamon.spring.auto
+package kamon.spring
 
 import java.util.concurrent.Executors
 
 import com.typesafe.config.ConfigFactory
 import kamon.Kamon
 import kamon.servlet.Metrics.{GeneralMetrics, ResponseTimeMetrics}
-import kamon.spring.auto.webapp.AppSupport
-import kamon.spring.auto.client.HttpClientSupport
+import kamon.spring.client.HttpClientSupport
+import kamon.spring.utils.SpanReporter
+import kamon.spring.webapp.AppSupport
 import kamon.testkit.MetricInspection
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.SpanSugar
@@ -31,7 +31,7 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, OptionValues, WordSpec}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 
-class HttpMetricsSpec extends WordSpec
+class HttpMetricsSyncSpec extends WordSpec
   with Matchers
   with Eventually
   with SpanSugar
@@ -44,7 +44,7 @@ class HttpMetricsSpec extends WordSpec
 
   override protected def beforeAll(): Unit = {
     Kamon.reconfigure(ConfigFactory.load())
-    startApp()
+    startJettyApp()
     startRegistration()
   }
 
@@ -54,7 +54,7 @@ class HttpMetricsSpec extends WordSpec
     Await.result(Kamon.stopAllReporters(), 2 seconds)
   }
 
-  private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(15))
+  private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5))
 
   "The Http Metrics generation" should {
     "track the total of active requests" in {
@@ -67,7 +67,7 @@ class HttpMetricsSpec extends WordSpec
       }
 
       eventually(timeout(3 seconds)) {
-        GeneralMetrics().activeRequests.distribution().min should (be > 0L and be <= 10L)
+        GeneralMetrics().activeRequests.distribution().min should (be >= 0L and be <= 10L)
       }
       reporter.clear()
     }

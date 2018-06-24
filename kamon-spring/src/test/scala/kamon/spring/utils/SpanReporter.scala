@@ -1,5 +1,4 @@
-/*
- * =========================================================================================
+/* =========================================================================================
  * Copyright © 2013-2018 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -14,7 +13,7 @@
  * =========================================================================================
  */
 
-package kamon.spring.auto
+package kamon.spring.utils
 
 import kamon.Kamon
 import kamon.testkit.{Reconfigure, TestSpanReporter}
@@ -31,7 +30,7 @@ trait SpanReporter extends Reconfigure {
     registration = Kamon.addReporter(reporter)
   }
 
-  def stopRegistration(): Unit = {
+   def stopRegistration(): Unit = {
     registration.cancel()
   }
 }

@@ -1,5 +1,4 @@
-/*
- * =========================================================================================
+/* =========================================================================================
  * Copyright © 2013-2018 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -22,6 +21,7 @@ import com.typesafe.config.ConfigFactory
 import kamon.Kamon
 import kamon.servlet.Metrics.{GeneralMetrics, ResponseTimeMetrics}
 import kamon.spring.client.HttpClientSupport
+import kamon.spring.utils.SpanReporter
 import kamon.spring.webapp.AppSupport
 import kamon.testkit.MetricInspection
 import org.scalatest.concurrent.Eventually
@@ -31,7 +31,7 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, OptionValues, WordSpec}
 import scala.concurrent.{ExecutionContext, Future}
 
 
-class AsyncHttpMetricsSpec extends WordSpec
+class HttpMetricsAsyncSpec extends WordSpec
   with Matchers
   with Eventually
   with SpanSugar
@@ -53,7 +53,7 @@ class AsyncHttpMetricsSpec extends WordSpec
     stopApp()
   }
 
-  private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(15))
+  private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5))
 
   "The Async Http Metrics generation" should {
     "track the total of active requests" in {
@@ -66,7 +66,7 @@ class AsyncHttpMetricsSpec extends WordSpec
       }
 
       eventually(timeout(3 seconds)) {
-        GeneralMetrics().activeRequests.distribution().min should (be > 0L and be <= 10L)
+        GeneralMetrics().activeRequests.distribution().min should (be >= 0L and be <= 10L)
       }
       reporter.clear()
     }
