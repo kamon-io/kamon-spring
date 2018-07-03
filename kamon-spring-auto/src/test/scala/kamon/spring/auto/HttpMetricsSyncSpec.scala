@@ -42,7 +42,12 @@ class HttpMetricsSyncSpec extends WordSpec
   with HttpClientSupport {
 
   override protected def beforeAll(): Unit = {
-    Kamon.reconfigure(ConfigFactory.load())
+    applyConfig(
+      """
+        |kamon {
+        |  metric.tick-interval = 10 millis
+        |}
+    """.stripMargin)
     startJettyApp()
     startRegistration()
   }

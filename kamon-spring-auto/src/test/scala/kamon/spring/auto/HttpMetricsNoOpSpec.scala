@@ -42,7 +42,13 @@ class HttpMetricsNoOpSpec extends WordSpec
   with HttpClientSupport {
 
   override protected def beforeAll(): Unit = {
-    Kamon.reconfigure(ConfigFactory.parseString("kamon.servlet.metrics.enabled=false").withFallback(ConfigFactory.load()))
+    applyConfig(
+      """
+        |kamon {
+        |  metric.tick-interval = 10 millis
+        |  servlet.metrics.enabled = false
+        |}
+    """.stripMargin)
     startJettyApp()
     startRegistration()
   }

@@ -48,9 +48,7 @@ class HttpMetricsSyncSpec extends WordSpec
         |kamon {
         |  metric.tick-interval = 10 millis
         |}
-        |
-    """.stripMargin
-    )
+    """.stripMargin)
     startJettyApp()
     startRegistration()
   }
