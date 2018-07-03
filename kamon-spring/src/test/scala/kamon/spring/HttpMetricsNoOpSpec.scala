@@ -53,12 +53,12 @@ class HttpMetricsNoOpSpec extends WordSpec
     stopApp()
   }
 
-  private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(15))
+  private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5))
 
   "The NoOp HttpMetrics" should {
     "not generate metrics" in {
 
-      for(_ <- 1 to 10) yield  {
+      for(_ <- 1 to 5) yield  {
         Future { get("/sync/tracing/slowly") }(parallelRequestExecutor)
       }
 

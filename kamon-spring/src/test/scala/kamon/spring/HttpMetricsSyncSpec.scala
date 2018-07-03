@@ -43,7 +43,14 @@ class HttpMetricsSyncSpec extends WordSpec
   with HttpClientSupport {
 
   override protected def beforeAll(): Unit = {
-    Kamon.reconfigure(ConfigFactory.load())
+    applyConfig(
+      """
+        |kamon {
+        |  metric.tick-interval = 10 millis
+        |}
+        |
+    """.stripMargin
+    )
     startJettyApp()
     startRegistration()
   }
@@ -58,16 +65,16 @@ class HttpMetricsSyncSpec extends WordSpec
 
   "The Http Metrics generation" should {
     "track the total of active requests" in {
-      for(_ <- 1 to 10) yield  {
+      for(_ <- 1 to 5) yield  {
         Future { get("/sync/tracing/slowly") }(parallelRequestExecutor)
       }
 
-      eventually(timeout(3 seconds)) {
-        GeneralMetrics().activeRequests.distribution().max should (be > 0L and be <= 10L)
+      eventually(timeout(5 seconds)) {
+        GeneralMetrics().activeRequests.distribution().max should (be > 0L and be <= 5L)
       }
 
       eventually(timeout(3 seconds)) {
-        GeneralMetrics().activeRequests.distribution().min should (be >= 0L and be <= 10L)
+        GeneralMetrics().activeRequests.distribution().min should (be >= 0L and be <= 5L)
       }
       reporter.clear()
     }
