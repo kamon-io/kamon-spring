@@ -1,7 +1,23 @@
+/* =========================================================================================
+ * Copyright © 2013-2018 the kamon project <http://kamon.io/>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ * =========================================================================================
+ */
+
 package kamon.spring
 
 import kamon.Kamon
 import kamon.context.Context
+import kamon.spring.utils.SpanReporter
 import kamon.spring.webapp.AppSupport
 import kamon.trace.Span.TagValue
 import kamon.trace.{Span, SpanCustomizer}
@@ -14,7 +30,7 @@ import org.springframework.web.client._
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
-sealed trait ClientProvider {
+trait ClientProvider {
   def port: Int
   def GetRequest[T: ClassTag](url: String): ResponseEntity[T]
 
@@ -26,7 +42,7 @@ object ClientProvider {
   abstract class Sync extends ClientProvider with AppSupport {
     import Inside._
 
-    private lazy val app: ConfigurableApplicationContext = startJettyApp(kamonSpringWebEnabled = false)
+    protected lazy val app: ConfigurableApplicationContext = startJettyApp(kamonSpringWebEnabled = false)
 
     def restTemplate: RestTemplate
 
@@ -48,7 +64,7 @@ object ClientProvider {
   abstract class Async extends ClientProvider with AppSupport {
     import Inside._
 
-    private lazy val app: ConfigurableApplicationContext = startJettyApp(kamonSpringWebEnabled = false)
+    protected lazy val app: ConfigurableApplicationContext = startJettyApp(kamonSpringWebEnabled = false)
 
     def asyncRestTemplate: AsyncRestTemplate
 

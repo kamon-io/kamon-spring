@@ -13,35 +13,22 @@
  * =========================================================================================
  */
 
-package kamon.spring
+package kamon.spring.auto
 
 import com.typesafe.config.ConfigFactory
 import kamon.Kamon
-import kamon.spring.utils.{ForkTest, SpanReporter}
-import kamon.spring.webapp.AppSupport
+import kamon.spring.utils.SpanReporter
+import kamon.spring.auto.webapp.AppSupport
 import kamon.spring.webapp.controller.{AsyncTracingController, SyncTracingController}
+import kamon.spring.{ServerBehaviors, ServerProvider}
 import kamon.testkit.Reconfigure
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
-@ForkTest(attachKanelaAgent = true)
-class JettyServerInstrumentationByKanelaSpec extends ServerInstrumentationSpec {
-  override def startApp(): Unit = startJettyApp(kamonSpringWebEnabled = false)
-}
 
-@ForkTest(attachKanelaAgent = true)
-class TomcatServerInstrumentationByKanelaSpec extends ServerInstrumentationSpec {
-  override def startApp(): Unit = startTomcatApp(kamonSpringWebEnabled = false)
-}
-
-@ForkTest(attachKanelaAgent = true)
-class UndertowServerInstrumentationByKanelaSpec extends ServerInstrumentationSpec {
-  override def startApp(): Unit = startUndertowApp(kamonSpringWebEnabled = false)
-}
-
-abstract class ServerInstrumentationByKanelaSpec extends FlatSpec
+class ServerSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterAll
   with Eventually
@@ -50,8 +37,6 @@ abstract class ServerInstrumentationByKanelaSpec extends FlatSpec
   with Reconfigure
   with AppSupport
   with ServerBehaviors { self =>
-
-  def startApp(): Unit
 
   override protected def beforeAll(): Unit = {
     Kamon.reconfigure(ConfigFactory.load())
@@ -70,10 +55,10 @@ abstract class ServerInstrumentationByKanelaSpec extends FlatSpec
     override def port: Int = self.port
   }
 
-  "A Server with sync controllers instrumented by Kanela" should behave like
+  "A Server with sync controllers instrumented by KamonSpringAuto" should behave like
     contextPropagation(new Server(prefixEndpoint = "sync", exceptionStatus = 200,
       SyncTracingController.slowlyServiceDuration))
-  "A Server with async controllers instrumented by Kanela" should behave like
+  "A Server with async controllers instrumented by KamonSpringAuto" should behave like
     contextPropagation(new Server(prefixEndpoint = "async", exceptionStatus = 500,
       AsyncTracingController.slowlyServiceDuration))
 }

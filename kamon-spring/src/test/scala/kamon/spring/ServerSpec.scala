@@ -1,5 +1,4 @@
-/*
- * =========================================================================================
+/* =========================================================================================
  * Copyright © 2013-2018 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -18,7 +17,7 @@ package kamon.spring
 
 import com.typesafe.config.ConfigFactory
 import kamon.Kamon
-import kamon.spring.utils.ForkTest
+import kamon.spring.utils.SpanReporter
 import kamon.spring.webapp.AppSupport
 import kamon.spring.webapp.controller.{AsyncTracingController, SyncTracingController}
 import kamon.testkit.Reconfigure
@@ -27,22 +26,19 @@ import org.scalatest.concurrent.Eventually
 
 import scala.concurrent.duration.FiniteDuration
 
-@ForkTest(attachKanelaAgent = true)
-class JettyServerInstrumentationByKanelaSpec extends ServerInstrumentationSpec {
-  override def startApp(): Unit = startJettyApp(kamonSpringWebEnabled = false)
+class JettyServerInstrumentationSpec extends ServerInstrumentationSpec {
+  override def startApp(): Unit = startJettyApp()
 }
 
-@ForkTest(attachKanelaAgent = true)
-class TomcatServerInstrumentationByKanelaSpec extends ServerInstrumentationSpec {
-  override def startApp(): Unit = startTomcatApp(kamonSpringWebEnabled = false)
+class TomcatServerInstrumentationSpec extends ServerInstrumentationSpec {
+  override def startApp(): Unit = startTomcatApp()
 }
 
-@ForkTest(attachKanelaAgent = true)
-class UndertowServerInstrumentationByKanelaSpec extends ServerInstrumentationSpec {
-  override def startApp(): Unit = startUndertowApp(kamonSpringWebEnabled = false)
+class UndertowServerInstrumentationSpec extends ServerInstrumentationSpec {
+  override def startApp(): Unit = startUndertowApp()
 }
 
-abstract class ServerInstrumentationByKanelaSpec extends FlatSpec
+abstract class ServerInstrumentationSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterAll
   with Eventually
@@ -71,11 +67,10 @@ abstract class ServerInstrumentationByKanelaSpec extends FlatSpec
     override def port: Int = self.port
   }
 
-  "A Server with sync controllers instrumented by Kanela" should behave like
+  "A Server with sync controllers instrumented manually" should behave like
     contextPropagation(new Server(prefixEndpoint = "sync", exceptionStatus = 200,
       SyncTracingController.slowlyServiceDuration))
-  "A Server with async controllers instrumented by Kanela" should behave like
+  "A Server with async controllers instrumented manually" should behave like
     contextPropagation(new Server(prefixEndpoint = "async", exceptionStatus = 500,
       AsyncTracingController.slowlyServiceDuration))
-
 }
