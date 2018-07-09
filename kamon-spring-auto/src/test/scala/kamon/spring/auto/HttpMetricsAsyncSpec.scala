@@ -17,8 +17,6 @@ package kamon.spring.auto
 
 import java.util.concurrent.Executors
 
-import com.typesafe.config.ConfigFactory
-import kamon.Kamon
 import kamon.servlet.Metrics.{GeneralMetrics, ResponseTimeMetrics}
 import kamon.spring.client.HttpClientSupport
 import kamon.spring.utils.SpanReporter
@@ -46,6 +44,7 @@ class HttpMetricsAsyncSpec extends WordSpec
       """
         |kamon {
         |  metric.tick-interval = 10 millis
+        |  servlet.metrics.enabled = true
         |}
     """.stripMargin)
     startJettyApp()
@@ -57,12 +56,12 @@ class HttpMetricsAsyncSpec extends WordSpec
     stopApp()
   }
 
-  private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5))
+  private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(15))
 
   "The Async Http Metrics generation" should {
     "track the total of active requests" in {
-      for(_ <- 1 to 10)  {
-        Future { get("/async/tracing/slowly") }(parallelRequestExecutor)
+      for(_ <- 1 to 10) {
+        Future { get("/async/tracing/slowly").close() }(parallelRequestExecutor)
       }
 
       eventually(timeout(3 seconds)) {
@@ -76,17 +75,17 @@ class HttpMetricsAsyncSpec extends WordSpec
     }
 
     "track the response time with status code 2xx" in {
-      for(_ <- 1 to 100) yield get("/async/tracing/ok")
+      for(_ <- 1 to 100) yield get("/async/tracing/ok").close()
       ResponseTimeMetrics().forStatusCode("2xx").distribution().max should be >= 1000000L // 1 ms expressed in nanos
     }
 
     "track the response time with status code 4xx" in {
-      for(_ <- 1 to 100) yield get("/async/tracing/not-found")
+      for(_ <- 1 to 100) yield get("/async/tracing/not-found").close()
       ResponseTimeMetrics().forStatusCode("4xx").distribution().max should be >= 1000000L // 1 ms expressed in nanos
     }
 
     "track the response time with status code 5xx" in {
-      for(_ <- 1 to 100) yield get("/async/tracing/error")
+      for(_ <- 1 to 100) yield get("/async/tracing/error").close()
       ResponseTimeMetrics().forStatusCode("5xx").distribution().max should be >= 1000000L // 1 ms expressed in nanos
     }
   }

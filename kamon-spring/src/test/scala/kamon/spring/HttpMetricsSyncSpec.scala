@@ -17,7 +17,6 @@ package kamon.spring
 
 import java.util.concurrent.Executors
 
-import com.typesafe.config.ConfigFactory
 import kamon.Kamon
 import kamon.servlet.Metrics.{GeneralMetrics, ResponseTimeMetrics}
 import kamon.spring.client.HttpClientSupport
@@ -47,6 +46,7 @@ class HttpMetricsSyncSpec extends WordSpec
       """
         |kamon {
         |  metric.tick-interval = 10 millis
+        |  servlet.metrics.enabled = true
         |}
     """.stripMargin)
     startJettyApp()
@@ -59,12 +59,12 @@ class HttpMetricsSyncSpec extends WordSpec
     Await.result(Kamon.stopAllReporters(), 2 seconds)
   }
 
-  private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5))
+  private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(15))
 
   "The Http Metrics generation" should {
     "track the total of active requests" in {
-      for(_ <- 1 to 10) yield  {
-        Future { get("/sync/tracing/slowly") }(parallelRequestExecutor)
+      for(_ <- 1 to 10) {
+        Future { get("/sync/tracing/slowly").close() }(parallelRequestExecutor)
       }
 
       eventually(timeout(5 seconds)) {
@@ -78,17 +78,17 @@ class HttpMetricsSyncSpec extends WordSpec
     }
 
     "track the response time with status code 2xx" in {
-      for(_ <- 1 to 100) yield get("/sync/tracing/ok").close()
+      for(_ <- 1 to 100) get("/sync/tracing/ok").close()
       ResponseTimeMetrics().forStatusCode("2xx").distribution().max should be > 0L
     }
 
     "track the response time with status code 4xx" in {
-      for(_ <- 1 to 100) yield get("/sync/tracing/not-found")
+      for(_ <- 1 to 100) get("/sync/tracing/not-found").close()
       ResponseTimeMetrics().forStatusCode("4xx").distribution().max should be > 0L
     }
 
     "track the response time with status code 5xx" in {
-      for(_ <- 1 to 100) yield get("/sync/tracing/error")
+      for(_ <- 1 to 100) get("/sync/tracing/error").close()
       ResponseTimeMetrics().forStatusCode("5xx").distribution().max should be > 0L
     }
   }

@@ -1,8 +1,7 @@
 language: scala
 
 script:
-  - sbt +kamon-spring/test
-  - sbt +kamon-spring-auto/test
+  - sbt +test
 scala:
    - 2.12.6
 jdk:

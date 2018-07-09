@@ -17,8 +17,6 @@ package kamon.spring
 
 import java.util.concurrent.Executors
 
-import com.typesafe.config.ConfigFactory
-import kamon.Kamon
 import kamon.servlet.Metrics.GeneralMetrics
 import kamon.spring.client.HttpClientSupport
 import kamon.spring.utils.SpanReporter
@@ -64,8 +62,8 @@ class HttpMetricsNoOpSpec extends WordSpec
   "The NoOp HttpMetrics" should {
     "not generate metrics" in {
 
-      for(_ <- 1 to 5) yield  {
-        Future { get("/sync/tracing/slowly") }(parallelRequestExecutor)
+      for(_ <- 1 to 5) {
+        Future { get("/sync/tracing/slowly").close() }(parallelRequestExecutor)
       }
 
       eventually(timeout(3 seconds)) {

@@ -38,7 +38,7 @@ class KamonSpringAuto extends KamonSpringLogger{
     registrationBean.setEnabled(true)
     registrationBean.setName("kamonFilter")
     registrationBean.setDispatcherTypes(util.EnumSet.of(DispatcherType.REQUEST))
-    registrationBean.setOrder(Int.MaxValue)
+    registrationBean.setOrder(Int.MinValue)
     registrationBean
   }
 
