@@ -23,6 +23,7 @@ trait AppSupport {
   private var _port = Option.empty[Int]
 
   def startApp(kamonWebEnabled: Boolean = true, kamonClientEnabled: Boolean = true): ConfigurableApplicationContext = {
+    System.setProperty("server.port", 0.toString)
     System.setProperty("kamon.spring.web.enabled", kamonWebEnabled.toString)
     System.setProperty("kamon.spring.rest-template.enabled", kamonClientEnabled.toString)
     val configApp = SpringApplication.run(classOf[AppRunner])
