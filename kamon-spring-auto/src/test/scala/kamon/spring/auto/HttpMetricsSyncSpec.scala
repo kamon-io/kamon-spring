@@ -62,16 +62,16 @@ class HttpMetricsSyncSpec extends WordSpec
 
   "The Http Metrics generation" should {
     "track the total of active requests" in {
-      for(_ <- 1 to 5) {
+      for(_ <- 1 to 10) {
         Future { get("/sync/tracing/slowly") }(parallelRequestExecutor)
       }
 
       eventually(timeout(3 seconds)) {
-        GeneralMetrics().activeRequests.distribution().max should (be > 0L and be <= 5L)
+        GeneralMetrics().activeRequests.distribution().max should (be > 0L and be <= 10L)
       }
 
       eventually(timeout(3 seconds)) {
-        GeneralMetrics().activeRequests.distribution().min should (be >= 0L and be <= 5L)
+        GeneralMetrics().activeRequests.distribution().min should (be >= 0L and be <= 10L)
       }
       reporter.clear()
     }

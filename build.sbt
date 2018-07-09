@@ -80,7 +80,7 @@ lazy val kamonSpringBench = Project("benchmarks", file("kamon-spring-bench"))
   .settings(noPublishing: _*)
   .settings(
     libraryDependencies ++=
-      compileScope(springBootStarterWeb, /*springStarterJetty, */httpClient))
+      compileScope(springBootStarterWeb, httpClient))
   .dependsOn(kamonSpringAuto)
 
 lazy val scalaVersionSupport = crossScalaVersions := Seq("2.12.6")
