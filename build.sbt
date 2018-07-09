@@ -41,6 +41,7 @@ val scalatest               = "org.scalatest"             %% "scalatest"        
 
 
 lazy val root = (project in file("."))
+  .settings(scalaVersionSupport)
   .settings(noPublishing: _*)
   .aggregate(kamonSpring, kamonSpringAuto, kamonSpringBench)
 
@@ -82,10 +83,15 @@ lazy val kamonSpringBench = Project("benchmarks", file("kamon-spring-bench"))
       compileScope(springBootStarterWeb, /*springStarterJetty, */httpClient))
   .dependsOn(kamonSpringAuto)
 
+lazy val scalaVersionSupport = crossScalaVersions := Seq("2.12.6")
+
 val commonSettings = Seq(
   scalaVersion := "2.12.6",
-  resolvers += Resolver.mavenLocal,
-  crossScalaVersions := Seq("2.12.6"),
+  resolvers ++= Seq(
+    Resolver.mavenLocal,
+    Resolver.bintrayRepo("kamon-io", "releases"),
+    Resolver.bintrayRepo("kamon-io", "snapshots")),
+  scalaVersionSupport,
   scalacOptions ++= Seq(
     "-language:higherKinds",
     "-language:postfixOps") ++ (CrossVersion.partialVersion(scalaVersion.value) match {
