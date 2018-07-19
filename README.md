@@ -5,6 +5,7 @@
 
 
 
+
 ### Config
 
 `kamon-spring` uses [TypeSafe Config][4]. Default configuration is
