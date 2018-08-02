@@ -13,8 +13,8 @@
  * =========================================================================================
  */
 
-val kamonVersion = "1.1.0"
-val kanelaVersion = "0.0.12-6f56711e5ee41e3e48beab70ad43f77dd09ee725"
+val kamonVersion = "1.1.3"
+val kanelaVersion = "0.0.12"
 val jettyV9Version = "9.4.8.v20171121"
 val tomcatV8Version = "8.5.31"
 val undertowVersion = "1.4.25.Final"
@@ -29,7 +29,7 @@ val springBootStarterTest   = "org.springframework.boot"  %  "spring-boot-starte
 val springStarterJetty      = "org.springframework.boot"  %  "spring-boot-starter-jetty"    % "1.5.14.RELEASE"
 val springStarterUndertow   = "org.springframework.boot"  %  "spring-boot-starter-undertow" % "1.5.14.RELEASE"
 val springBootAutoconfigure = "org.springframework.boot"  %  "spring-boot-autoconfigure"    % "1.5.14.RELEASE"
-val kamonServlet3           = "io.kamon"                  %  "kamon-servlet-3_2.12"         % "1.0.0-4b315976df805d532c36a64bf9cc5331c4f7835f"
+val kamonServlet3           = "io.kamon"                  %  "kamon-servlet-3_2.12"         % "1.0.0"
 val servletApiV3            = "javax.servlet"             %  "javax.servlet-api"            % "3.0.1"
 val jettyServletV9          = "org.eclipse.jetty"         %  "jetty-servlet"                % jettyV9Version
 val tomcatServletV8         = "org.apache.tomcat"         %  "tomcat-catalina"              % tomcatV8Version
@@ -46,6 +46,7 @@ lazy val root = (project in file("."))
   .aggregate(kamonSpring, kamonSpringAuto, kamonSpringBench)
 
 lazy val kamonSpring = Project("kamon-spring", file("kamon-spring"))
+  .settings(bintrayPackage := "kamon-spring")
   .settings(moduleName := "kamon-spring")
   .enablePlugins(JavaAgent)
   .settings(javaAgents += "io.kamon" % "kanela-agent" % kanelaVersion % "compile;test")
@@ -61,6 +62,7 @@ lazy val kamonSpring = Project("kamon-spring", file("kamon-spring"))
 
 lazy val kamonSpringAuto = Project("kamon-spring-auto", file("kamon-spring-auto"))
   .dependsOn(kamonSpring % "compile->compile;test->test")
+  .settings(bintrayPackage := "kamon-spring")
   .settings(moduleName := "kamon-spring-auto")
   .settings(commonSettings: _*)
   .settings(commonTestSettings: _*)
