@@ -1,5 +1,5 @@
 /* =========================================================================================
- * Copyright © 2013-2018 the kamon project <http://kamon.io/>
+ * Copyright © 2013-2019 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -16,27 +16,16 @@
 package kamon.spring.instrumentation
 
 import kamon.spring.instrumentation.advisor.{JettyServletHandlerAdvisor, TomcatServletHandlerAdvisor, UndertowServletHandlerAdvisor}
-import kanela.agent.scala.KanelaInstrumentation
+import kanela.agent.api.instrumentation.InstrumentationBuilder
 
+class ServerInstrumentation  extends InstrumentationBuilder {
 
-class ServerInstrumentation  extends KanelaInstrumentation {
+  onType("org.eclipse.jetty.servlet.ServletHandler")
+    .advise(method("initialize"), classOf[JettyServletHandlerAdvisor])
 
-  forTargetType("org.eclipse.jetty.servlet.ServletHandler") { builder =>
-    builder
-      .withAdvisorFor(method("initialize"), classOf[JettyServletHandlerAdvisor])
-      .build()
-  }
+  onSubTypesOf("org.apache.catalina.core.StandardContext")
+      .advise(method("filterStart"), classOf[TomcatServletHandlerAdvisor])
 
-  forSubtypeOf("org.apache.catalina.core.StandardContext") { builder =>
-    builder
-      .withAdvisorFor(method("filterStart"), classOf[TomcatServletHandlerAdvisor])
-      .build()
-  }
-
-  forSubtypeOf("io.undertow.servlet.core.DeploymentManagerImpl") { builder =>
-    builder
-      .withAdvisorFor(Constructor, classOf[UndertowServletHandlerAdvisor])
-      .build()
-  }
-
+  onSubTypesOf("io.undertow.servlet.core.DeploymentManagerImpl")
+      .advise(isConstructor, classOf[UndertowServletHandlerAdvisor])
 }

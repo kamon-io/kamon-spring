@@ -13,15 +13,16 @@
  * =========================================================================================
  */
 
-val kamonVersion = "1.1.3"
-val kanelaVersion = "0.0.12"
+val kamonVersion = "2.0.4"
+val kanelaVersion = "1.0.4"
 val jettyV9Version = "9.4.8.v20171121"
 val tomcatV8Version = "8.5.31"
 val undertowVersion = "1.4.25.Final"
 
 val kamonCore               = "io.kamon"                  %% "kamon-core"                   % kamonVersion
 val kamonTestkit            = "io.kamon"                  %% "kamon-testkit"                % kamonVersion
-val scalaExtension          = "io.kamon"                  %% "kanela-scala-extension"       % "0.0.10"
+val kamonCommon             = "io.kamon"                  %% "kamon-instrumentation-common" % "2.0.1"
+
 
 val springWeb               = "org.springframework"       %  "spring-web"                   % "4.3.18.RELEASE"
 val springBootStarterWeb    = "org.springframework.boot"  %  "spring-boot-starter-web"      % "1.5.14.RELEASE"
@@ -52,10 +53,10 @@ lazy val kamonSpring = Project("kamon-spring", file("kamon-spring"))
   .settings(javaAgents += "io.kamon" % "kanela-agent" % kanelaVersion % "compile;test")
   .settings(commonSettings: _*)
   .settings(commonTestSettings: _*)
-  .settings(KanelaAttacherTest.settings: _*)
+//  .settings(KanelaAttacherTest.settings: _*)
   .settings(
     libraryDependencies ++=
-      compileScope(kamonCore, kamonServlet3, scalaExtension) ++
+      compileScope(kamonCore, kamonServlet3, kamonCommon) ++
       providedScope(jettyServletV9, tomcatServletV8, undertowServlet, servletApiV3, springWeb) ++
       testScope(scalatest, kamonTestkit, logbackClassic, springBootStarterWeb, springStarterJetty,
         springStarterUndertow, httpClient))
@@ -85,10 +86,10 @@ lazy val kamonSpringBench = Project("benchmarks", file("kamon-spring-bench"))
       compileScope(springBootStarterWeb, httpClient))
   .dependsOn(kamonSpringAuto)
 
-lazy val scalaVersionSupport = crossScalaVersions := Seq("2.12.6")
+lazy val scalaVersionSupport = crossScalaVersions := Seq("2.12.10")
 
 val commonSettings = Seq(
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.12.10",
   resolvers ++= Seq(
     Resolver.mavenLocal,
     Resolver.bintrayRepo("kamon-io", "releases"),

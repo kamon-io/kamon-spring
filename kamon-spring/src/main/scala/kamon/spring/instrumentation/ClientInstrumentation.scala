@@ -1,5 +1,5 @@
 /* =========================================================================================
- * Copyright © 2013-2018 the kamon project <http://kamon.io/>
+ * Copyright © 2013-2019 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -16,20 +16,13 @@
 package kamon.spring.instrumentation
 
 import kamon.spring.instrumentation.advisor.{InterceptingAsyncHttpAccessorAdvisor, InterceptingSyncHttpAccessorAdvisor}
-import kanela.agent.scala.KanelaInstrumentation
+import kanela.agent.api.instrumentation.InstrumentationBuilder
 
-class ClientInstrumentation extends KanelaInstrumentation {
+class ClientInstrumentation extends InstrumentationBuilder {
 
-  forSubtypeOf("org.springframework.http.client.support.InterceptingHttpAccessor") { builder =>
-    builder
-      .withAdvisorFor(Constructor, classOf[InterceptingSyncHttpAccessorAdvisor])
-      .build()
-  }
+  onSubTypesOf("org.springframework.http.client.support.InterceptingHttpAccessor")
+    .advise(isConstructor, classOf[InterceptingSyncHttpAccessorAdvisor])
 
-  forSubtypeOf("org.springframework.http.client.support.InterceptingAsyncHttpAccessor") { builder =>
-    builder
-      .withAdvisorFor(Constructor, classOf[InterceptingAsyncHttpAccessorAdvisor])
-      .build()
-  }
-
+  onSubTypesOf("org.springframework.http.client.support.InterceptingAsyncHttpAccessor")
+    .advise(isConstructor, classOf[InterceptingAsyncHttpAccessorAdvisor])
 }

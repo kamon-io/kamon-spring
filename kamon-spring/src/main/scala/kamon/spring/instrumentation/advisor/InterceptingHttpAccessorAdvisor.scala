@@ -19,7 +19,6 @@ import kamon.spring.client.interceptor.{KamonAsyncInterceptorInjector, KamonSync
 import kanela.agent.libs.net.bytebuddy.asm.Advice
 import org.springframework.http.client.support.{InterceptingAsyncHttpAccessor, InterceptingHttpAccessor}
 
-
 class InterceptingSyncHttpAccessorAdvisor
 object InterceptingSyncHttpAccessorAdvisor {
 

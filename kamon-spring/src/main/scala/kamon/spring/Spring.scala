@@ -1,5 +1,5 @@
 /* =========================================================================================
- * Copyright © 2013-2018 the kamon project <http://kamon.io/>
+ * Copyright © 2013-2019 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -17,8 +17,9 @@ package kamon.spring
 
 import com.typesafe.config.Config
 import javax.servlet.http.HttpServletRequest
+import kamon.Configuration.OnReconfigureHook
+import kamon.Kamon
 import kamon.util.DynamicAccess
-import kamon.{Kamon, OnReconfigureHook}
 import org.springframework.http.HttpRequest
 
 object Spring {
@@ -32,7 +33,7 @@ object Spring {
   private def nameGeneratorFromConfig(config: Config): NameGenerator = {
     val dynamic = new DynamicAccess(getClass.getClassLoader)
     val nameGeneratorFQCN = config.getString("kamon.spring.name-generator")
-    dynamic.createInstanceFor[NameGenerator](nameGeneratorFQCN, Nil).get
+    dynamic.createInstanceFor[NameGenerator](nameGeneratorFQCN, Nil)
   }
 
   private def addHttpStatusCodeAsMetricTagFromConfig(config: Config): Boolean =
