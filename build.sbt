@@ -54,7 +54,7 @@ lazy val kamonSpring = Project("kamon-spring", file("kamon-spring"))
   .settings(javaAgents += "io.kamon" % "kanela-agent" % kanelaVersion % "compile;test")
   .settings(commonSettings: _*)
   .settings(commonTestSettings: _*)
-//  .settings(KanelaAttacherTest.settings: _*)
+  .settings(KanelaAttacherTest.settings: _*)
   .settings(
     libraryDependencies ++=
       compileScope(kamonCore, kamonServlet3, kamonCommon) ++
