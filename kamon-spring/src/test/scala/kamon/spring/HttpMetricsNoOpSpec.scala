@@ -19,9 +19,8 @@ import java.util.concurrent.Executors
 
 import kamon.servlet.Metrics.GeneralMetrics
 import kamon.spring.client.HttpClientSupport
-import kamon.spring.utils.SpanReporter
 import kamon.spring.webapp.AppSupport
-import kamon.testkit.MetricInspection
+import kamon.testkit.{InstrumentInspection, TestSpanReporter}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.SpanSugar
 import org.scalatest.{BeforeAndAfterAll, Matchers, OptionValues, WordSpec}
@@ -33,9 +32,9 @@ class HttpMetricsNoOpSpec extends WordSpec
   with Matchers
   with Eventually
   with SpanSugar
-  with MetricInspection
+  with InstrumentInspection.Syntax
   with OptionValues
-  with SpanReporter
+  with TestSpanReporter
   with BeforeAndAfterAll
   with AppSupport
   with HttpClientSupport {
@@ -49,11 +48,11 @@ class HttpMetricsNoOpSpec extends WordSpec
         |}
     """.stripMargin)
     startJettyApp()
-    startRegistration()
+//    startRegistration()
   }
 
   override protected def afterAll(): Unit = {
-    stopRegistration()
+//    stopRegistration()
     stopApp()
   }
 
@@ -73,7 +72,7 @@ class HttpMetricsNoOpSpec extends WordSpec
       eventually(timeout(3 seconds)) {
         GeneralMetrics().activeRequests.distribution().min shouldBe 0L
       }
-      reporter.clear()
+//      reporter.clear()
     }
   }
 }

@@ -16,8 +16,9 @@
 package kamon.spring
 
 import kamon.spring.client.interceptor.{KamonAsyncInterceptorInjector, KamonSyncInterceptorInjector}
-import kamon.spring.utils.SpanReporter
 import kamon.testkit.Reconfigure
+import kamon.testkit.{Reconfigure, TestSpanReporter}
+
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
 import org.springframework.web.client.{AsyncRestTemplate, RestTemplate}
@@ -29,7 +30,7 @@ class ClientSpec extends FlatSpec
   with BeforeAndAfterEach
   with Eventually
   with OptionValues
-  with SpanReporter
+  with TestSpanReporter
   with Reconfigure
   with ClientBehaviors {
 
@@ -50,12 +51,12 @@ class ClientSpec extends FlatSpec
         |
     """.stripMargin
     )
-    startRegistration()
+//    startRegistration()
 
   }
 
   override protected def afterAll(): Unit = {
-    stopRegistration()
+//    stopRegistration()
   }
 
   "A RestTemplate client built by default constructor" should behave like contextPropagation(SyncClientProvider())

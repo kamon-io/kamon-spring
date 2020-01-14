@@ -17,10 +17,10 @@ package kamon.spring
 
 import com.typesafe.config.ConfigFactory
 import kamon.Kamon
-import kamon.spring.utils.{ForkTest, SpanReporter}
+import kamon.spring.utils.ForkTest
 import kamon.spring.webapp.AppSupport
 import kamon.spring.webapp.controller.{AsyncTracingController, SyncTracingController}
-import kamon.testkit.Reconfigure
+import kamon.testkit.{Reconfigure, TestSpanReporter}
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
 
@@ -46,7 +46,7 @@ abstract class ServerInstrumentationByKanelaSpec extends FlatSpec
   with BeforeAndAfterAll
   with Eventually
   with OptionValues
-  with SpanReporter
+  with TestSpanReporter
   with Reconfigure
   with AppSupport
   with ServerBehaviors { self =>
@@ -56,12 +56,12 @@ abstract class ServerInstrumentationByKanelaSpec extends FlatSpec
   override protected def beforeAll(): Unit = {
     Kamon.reconfigure(ConfigFactory.load())
     startApp()
-    startRegistration()
+//    startRegistration()
   }
 
   override protected def afterAll(): Unit = {
     stopApp()
-    stopRegistration()
+//    stopRegistration()
   }
 
   class Server(override val prefixEndpoint: String,

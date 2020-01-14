@@ -16,7 +16,6 @@
 package kamon.spring.client.interceptor.sync
 
 import kamon.spring.client.interceptor.KamonSpringClientTracing
-import kamon.trace.Span
 import org.springframework.http.HttpRequest
 import org.springframework.http.client.{ClientHttpRequestExecution, ClientHttpRequestInterceptor, ClientHttpResponse}
 
@@ -25,14 +24,14 @@ class KamonRestTemplateInterceptor extends ClientHttpRequestInterceptor with Kam
   override def intercept(request: HttpRequest, body: Array[Byte],
                          execution: ClientHttpRequestExecution): ClientHttpResponse = {
 
-    val clientRequestSpan: Span = withNewSpan(request)
+    val clientRequestHandler = withNewSpan(request)
 
     try {
       val response = execution.execute(request, body)
-      successContinuation(clientRequestSpan)(response)
+      successContinuation(clientRequestHandler)(response)
     } catch {
       case error: Throwable =>
-        failureContinuation(clientRequestSpan)(error)
+        failureContinuation(clientRequestHandler)(error)
         throw error
     }
   }

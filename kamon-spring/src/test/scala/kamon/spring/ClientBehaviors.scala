@@ -1,5 +1,5 @@
 /* =========================================================================================
- * Copyright © 2013-2018 the kamon project <http://kamon.io/>
+ * Copyright © 2013-2019 the kamon project <http://kamon.io/>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -17,18 +17,19 @@ package kamon.spring
 
 import kamon.Kamon
 import kamon.context.Context
-import kamon.spring.utils.SpanReporter
 import kamon.spring.webapp.AppSupport
-import kamon.trace.Span.TagValue
-import kamon.trace.{Span, SpanCustomizer}
+import kamon.trace.Span
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{FlatSpec, Inside, Matchers, OptionValues}
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client._
+import kamon.testkit.TestSpanReporter
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
+import kamon.tag.Lookups.{plainLong, plain}
+
 
 trait ClientProvider {
   def port: Int
@@ -88,44 +89,45 @@ trait ClientBehaviors extends KamonSpringLogger { this: FlatSpec
   with Matchers
   with Eventually
   with OptionValues
-  with SpanReporter =>
+  with TestSpanReporter =>
 
   def contextPropagation(app: ClientProvider): Unit = {
     val port = app.port
 
     it should "propagate the current context and generate a span around an outgoing request" in {
 
-      val okSpan = Kamon.buildSpan("ok-operation-span").start()
+      val okSpan = Kamon.spanBuilder("ok-operation-span").start()
 
       val url = s"http://localhost:$port/sync/tracing/ok"
-      Kamon.withContext(Context.create(Span.ContextKey, okSpan)) {
+
+      Kamon.runWithContext(Context.of(Span.Key, okSpan)) {
         app.GetRequest[String](url).getStatusCodeValue shouldBe 200
       }
 
       eventually(timeout(3.seconds)) {
 
-        val span = reporter.nextSpan().value
-        val spanTags = stringTag(span) _
+        val span = testSpanReporter.nextSpan().value
 
         span.operationName shouldBe url
-        spanTags("span.kind") shouldBe "client"
-        spanTags("component") shouldBe "spring-rest-template-client"
-        spanTags("http.method") shouldBe "GET"
-        spanTags("http.url") shouldBe url
-        span.tags("http.status_code") shouldBe TagValue.Number(200)
+        span.kind shouldBe Span.Kind.Client
+        span.metricTags.get(plain("component")) shouldBe "spring-rest-template-client"
+        span.metricTags.get(plain("http.method")) shouldBe "GET"
+        span.metricTags.get(plain("http.url")) shouldBe url
+        span.metricTags.get(plainLong("http.status_code")) shouldBe 200
 
-        span.context.parentID.string shouldBe okSpan.context().spanID.string
-        reporter.nextSpan() shouldBe None
+        okSpan.id == span.parentId
+
+        testSpanReporter.nextSpan() shouldBe None
       }
     }
 
     it should "propagate the current context and generate a span called not-found when request produce 404" in {
 
-      val notFoundSpan = Kamon.buildSpan("not-found-operation-span").start()
+      val notFoundSpan = Kamon.spanBuilder("not-found-operation-span").start()
 
       val url = s"http://localhost:$port/sync/tracing/not-found"
       val exc = intercept[Throwable] {
-        Kamon.withContext(Context.create(Span.ContextKey, notFoundSpan)) {
+        Kamon.runWithContext(Context.of(Span.Key, notFoundSpan)) {
           app.GetRequest[String](url)
         }
       }
@@ -133,29 +135,29 @@ trait ClientBehaviors extends KamonSpringLogger { this: FlatSpec
 
       eventually(timeout(3.seconds)) {
 
-        val span = reporter.nextSpan().value
-        val spanTags = stringTag(span) _
+        val span = testSpanReporter.nextSpan().value
 
         span.operationName shouldBe "not-found"
-        spanTags("span.kind") shouldBe "client"
-        spanTags("component") shouldBe "spring-rest-template-client"
-        spanTags("http.method") shouldBe "GET"
-        spanTags("http.url") shouldBe url
-        span.tags("http.status_code") shouldBe TagValue.Number(404)
+        span.kind shouldBe Span.Kind.Client
+        span.metricTags.get(plain("component")) shouldBe "spring-rest-template-client"
+        span.metricTags.get(plain("http.method")) shouldBe "GET"
+        span.metricTags.get(plain("http.url")) shouldBe url
+        span.metricTags.get(plainLong("http.status_code")) shouldBe 404
 
-        span.context.parentID.string shouldBe notFoundSpan.context().spanID.string
-        reporter.nextSpan() shouldBe None
+        notFoundSpan.id == span.parentId
+
+       testSpanReporter.nextSpan() shouldBe None
       }
     }
 
     it should "propagate the current context and generate a span with error when request produce 500" in {
 
-      val errorSpan = Kamon.buildSpan("error-operation-span").start()
+      val errorSpan = Kamon.spanBuilder("error-operation-span").start()
 
       val url = s"http://localhost:$port/sync/tracing/error"
 
       val exc = intercept[Throwable] {
-        Kamon.withContext(Context.create(Span.ContextKey, errorSpan)) {
+        Kamon.runWithContext(Context.of(Span.Key, errorSpan)) {
           app.GetRequest[String](url)
         }
       }
@@ -164,56 +166,52 @@ trait ClientBehaviors extends KamonSpringLogger { this: FlatSpec
 
       eventually(timeout(3.seconds)) {
 
-        val span = reporter.nextSpan().value
-        val spanTags = stringTag(span) _
+        val span = testSpanReporter.nextSpan().value
 
         span.operationName shouldBe url
-        spanTags("span.kind") shouldBe "client"
-        spanTags("component") shouldBe "spring-rest-template-client"
-        spanTags("http.method") shouldBe "GET"
-        spanTags("http.url") shouldBe url
-        span.tags("error") shouldBe TagValue.True
-        span.tags("http.status_code") shouldBe TagValue.Number(500)
+        span.kind shouldBe Span.Kind.Client
+        span.metricTags.get(plain("component")) shouldBe "spring-rest-template-client"
+        span.metricTags.get(plain("http.method")) shouldBe "GET"
+        span.metricTags.get(plain("http.url")) shouldBe url
+        span.metricTags.get(plainLong("http.status_code")) shouldBe 500
 
-        span.context.parentID.string shouldBe errorSpan.context().spanID.string
-        reporter.nextSpan() shouldBe None
+        errorSpan.id == span.parentId
+
+        testSpanReporter.nextSpan() shouldBe None
       }
     }
 
     it should "propagate the current context and pickup a SpanCustomizer to create a new span" in {
 
-      val okSpan = Kamon.buildSpan("ok-operation-span").start()
+      val okSpan = Kamon.spanBuilder("ok-operation-span").start()
 
       val url = s"http://localhost:$port/sync/tracing/ok"
 
       val customizedOperationName = "customized-operation-name"
 
-      val context = Context.create(Span.ContextKey, okSpan)
-        .withKey(SpanCustomizer.ContextKey, SpanCustomizer.forOperationName(customizedOperationName))
+//      val context = Context.of(Span.Key, okSpan)
+//        .withKey(SpanCustomizer.ContextKey, SpanCustomizer.forOperationName(customizedOperationName))
 
-      Kamon.withContext(context) {
+      Kamon.runWithContext(Kamon.currentContext()) {
         app.GetRequest[String](url).getStatusCodeValue shouldBe 200
       }
 
       eventually(timeout(3.seconds)) {
 
-        val span = reporter.nextSpan().value
-        val spanTags = stringTag(span) _
+        val span = testSpanReporter.nextSpan().value
 
         span.operationName shouldBe customizedOperationName
-        spanTags("span.kind") shouldBe "client"
-        spanTags("component") shouldBe "spring-rest-template-client"
-        spanTags("http.method") shouldBe "GET"
-        spanTags("http.url") shouldBe url
-        span.tags("http.status_code") shouldBe TagValue.Number(200)
+        span.kind shouldBe Span.Kind.Client
+        span.metricTags.get(plain("component")) shouldBe "spring-rest-template-client"
+        span.metricTags.get(plain("http.method")) shouldBe "GET"
+        span.metricTags.get(plain("http.url")) shouldBe url
+        span.metricTags.get(plainLong("http.status_code")) shouldBe 200
 
-        span.context.parentID.string shouldBe okSpan.context().spanID.string
-        reporter.nextSpan() shouldBe None
+        okSpan.id == span.parentId
+
+
+        testSpanReporter.nextSpan() shouldBe None
       }
     }
-  }
-
-  def stringTag(span: Span.FinishedSpan)(tag: String): String = {
-    span.tags(tag).asInstanceOf[TagValue.String].string
   }
 }

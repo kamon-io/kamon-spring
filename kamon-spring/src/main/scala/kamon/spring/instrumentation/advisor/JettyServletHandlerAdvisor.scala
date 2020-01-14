@@ -32,5 +32,4 @@ object JettyServletHandlerAdvisor {
     val servlet = servletHandler.asInstanceOf[ServletHandler]
     servlet.addFilterWithMapping(filterHolder,"/*", util.EnumSet.of(DispatcherType.REQUEST))
   }
-
 }

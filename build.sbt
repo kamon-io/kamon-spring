@@ -36,7 +36,8 @@ val jettyServletV9          = "org.eclipse.jetty"         %  "jetty-servlet"    
 val tomcatServletV8         = "org.apache.tomcat"         %  "tomcat-catalina"              % tomcatV8Version
 val undertowServlet         = "io.undertow"               %  "undertow-servlet"             % undertowVersion
 
-val httpClient              = "org.apache.httpcomponents" %  "httpclient"                   % "4.5.5"
+val httpCore                = "org.apache.httpcomponents" %  "httpcore"                         % "4.4.11"
+val httpClient              = "org.apache.httpcomponents" %  "httpclient"                   % "4.5.8"
 val logbackClassic          = "ch.qos.logback"            %  "logback-classic"              % "1.0.13"
 val scalatest               = "org.scalatest"             %% "scalatest"                    % "3.0.1"
 
@@ -58,8 +59,7 @@ lazy val kamonSpring = Project("kamon-spring", file("kamon-spring"))
     libraryDependencies ++=
       compileScope(kamonCore, kamonServlet3, kamonCommon) ++
       providedScope(jettyServletV9, tomcatServletV8, undertowServlet, servletApiV3, springWeb) ++
-      testScope(scalatest, kamonTestkit, logbackClassic, springBootStarterWeb, springStarterJetty,
-        springStarterUndertow, httpClient))
+      testScope(scalatest, kamonTestkit, logbackClassic, springBootStarterWeb, springStarterJetty, springStarterUndertow, httpCore, httpClient))
 
 lazy val kamonSpringAuto = Project("kamon-spring-auto", file("kamon-spring-auto"))
   .dependsOn(kamonSpring % "compile->compile;test->test")
