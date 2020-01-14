@@ -28,7 +28,8 @@ import scala.collection.JavaConverters._
 
 trait KamonSpringClientTracing {
 
-  val instrumentation = HttpClientInstrumentation.from(Kamon.config(), "spring-rest-template-client")
+  val httpClientConfig = Kamon.config().getConfig("kamon.instrumentation.spring.client")
+  val instrumentation = HttpClientInstrumentation.from(httpClientConfig, "spring-rest-template-client")
 
   protected def withNewSpan(request: HttpRequest): HttpClientInstrumentation.RequestHandler[HttpRequest] = {
     val requestHandler: HttpClientInstrumentation.RequestHandler[HttpRequest] = instrumentation.createHandler(getRequestBuilder(request), Kamon.currentContext())
