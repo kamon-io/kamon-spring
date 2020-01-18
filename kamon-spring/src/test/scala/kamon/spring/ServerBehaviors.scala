@@ -46,20 +46,24 @@ trait ServerBehaviors extends KamonSpringLogger {
     it should "propagate the current context and respond to the ok endpoint" in {
       HttpClientTest(app.port).get(s"/$prefix/tracing/ok").getStatusLine.getStatusCode shouldBe 200
 
+      println(s"************ it's running...")
       eventually(timeout(3 seconds)) {
 
         val span = testSpanReporter().nextSpan().value
 
+        println(s"************ it's here!")
+        println(s"************ ${span.operationName}")
         span.operationName shouldBe s"$prefix.tracing.ok.get"
         span.kind shouldBe Span.Kind.Server
         span.metricTags.get(plain("component")) shouldBe "spring-server"
         span.metricTags.get(plain("http.method")) shouldBe "GET"
-        span.metricTags.get(plain("http.url")) shouldBe s"/$prefix/tracing/ok"
+        span.tags.get(plain("http.url")) should endWith("/sync/tracing/ok")
+        span.metricTags.get(plain("http.url")) shouldBe endWith(s"/$prefix/tracing/ok")
         span.metricTags.get(plainLong("http.status_code")) shouldBe 200
 
-        span.parentId shouldBe ""
+        span.parentId.string shouldBe ""
 
-        testSpanReporter.nextSpan() shouldBe empty
+        testSpanReporter().nextSpan() shouldBe empty
       }
     }
 

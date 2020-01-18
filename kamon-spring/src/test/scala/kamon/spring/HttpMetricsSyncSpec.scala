@@ -18,7 +18,8 @@ package kamon.spring
 import java.util.concurrent.Executors
 
 import kamon.Kamon
-import kamon.servlet.Metrics.{GeneralMetrics, ResponseTimeMetrics}
+import kamon.instrumentation.http.HttpServerMetrics
+import kamon.servlet.Servlet
 import kamon.spring.client.HttpClientSupport
 import kamon.spring.webapp.AppSupport
 import kamon.testkit.{InstrumentInspection, MetricInspection, TestSpanReporter}
@@ -62,6 +63,8 @@ class HttpMetricsSyncSpec extends WordSpec
 
   private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(15))
 
+  def serverInstruments(): HttpServerMetrics.HttpServerInstruments = HttpServerMetrics.of(Servlet.tags.serverComponent, Servlet.server.interface, Servlet.server.port)
+
   "The Http Metrics generation" should {
     "track the total of active requests" in {
       for(_ <- 1 to 10) {
@@ -69,11 +72,11 @@ class HttpMetricsSyncSpec extends WordSpec
       }
 
       eventually(timeout(5 seconds)) {
-        GeneralMetrics().activeRequests.distribution().max should (be > 0L and be <= 10L)
+        serverInstruments().activeRequests.distribution().max should (be > 0L and be <= 10L)
       }
 
       eventually(timeout(3 seconds)) {
-        GeneralMetrics().activeRequests.distribution().min should (be >= 0L and be <= 10L)
+        serverInstruments().activeRequests.distribution().min should (be >= 0L and be <= 10L)
       }
       testSpanReporter().clear()
     }

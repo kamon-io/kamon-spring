@@ -17,7 +17,8 @@ package kamon.spring
 
 import java.util.concurrent.Executors
 
-import kamon.servlet.Metrics.{GeneralMetrics, ResponseTimeMetrics}
+import kamon.instrumentation.http.HttpServerMetrics
+import kamon.servlet.Servlet
 import kamon.spring.client.HttpClientSupport
 import kamon.testkit.{InstrumentInspection, MetricInspection, Reconfigure, TestSpanReporter}
 import kamon.spring.webapp.AppSupport
@@ -41,9 +42,10 @@ class HttpMetricsAsyncSpec extends WordSpec
 
   override protected def beforeAll(): Unit = {
     applyConfig(
-      """
+      s"""
         |kamon {
-        |  metric.tick-interval = 10 millis
+        |  instrumentation.servlet.server.interface = "0.0.0.0"
+        |  instrumentation.servlet.server.port = $port
         |  servlet.metrics.enabled = true
         |}
     """.stripMargin)
@@ -58,6 +60,8 @@ class HttpMetricsAsyncSpec extends WordSpec
 
   private val parallelRequestExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(15))
 
+  def serverInstruments(): HttpServerMetrics.HttpServerInstruments = HttpServerMetrics.of(Servlet.tags.serverComponent, Servlet.server.interface, Servlet.server.port)
+
   "The Async Http Metrics generation" should {
     "track the total of active requests" in {
       for(_ <- 1 to 10) {
@@ -65,11 +69,11 @@ class HttpMetricsAsyncSpec extends WordSpec
       }
 
       eventually(timeout(3 seconds)) {
-        GeneralMetrics().activeRequests.distribution().max should (be > 0L and be <= 10L)
+        serverInstruments().activeRequests.distribution().max should (be > 0L and be <= 10L)
       }
 
       eventually(timeout(3 seconds)) {
-        GeneralMetrics().activeRequests.distribution().min should (be >= 0L and be <= 10L)
+        serverInstruments().activeRequests.distribution().min should (be >= 0L and be <= 10L)
       }
 //      reporter.clear()
     }
